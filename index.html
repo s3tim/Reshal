@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Reshal — an AI-native terminal that turns plain language into real commands. Fast, local, and built for developers.">
+    <meta name="theme-color" content="#030305">
+    <title>Reshal — Command Your PC</title>
+    <style>
+        :root {
+            --bg-color: #030305;
+            --bg-elevated: #0a0a0f;
+            --text-color: #e8e8ef;
+            --muted: #8b8b99;
+            --accent-primary: #8a2be2; /* Quantum Violet */
+            --accent-violet: #a855f7;
+            --accent-secondary: #00ffff; /* Cyber Cyan */
+            --border-soft: rgba(255, 255, 255, 0.08);
+            --border-violet: rgba(138, 43, 226, 0.28);
+            --font-mono: ui-monospace, "SFMono-Regular", "Cascadia Code", "Cascadia Mono", "JetBrains Mono", "Fira Code", "Courier New", monospace;
+            --btn-padding: clamp(14px, 1.4vh, 18px) clamp(24px, 2.6vw, 40px);
+            --btn-font-size: clamp(13px, 1vw, 16px);
+            --radius: 14px;
+        }
+
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            color-scheme: dark;
+        }
+
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(1100px 700px at 85% -10%, rgba(138, 43, 226, 0.08), transparent 62%),
+                radial-gradient(800px 600px at 0% 100%, rgba(0, 255, 255, 0.04), transparent 60%),
+                var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-mono);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        ::selection {
+            background: rgba(0, 255, 255, 0.24);
+            color: #fff;
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--accent-secondary);
+            outline-offset: 4px;
+        }
+
+        /* --- HERO --- */
+        #hero {
+            position: relative;
+            isolation: isolate;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: flex-start;
+            min-height: 100vh;
+            min-height: 100svh;
+            padding: clamp(110px, 16vh, 170px) clamp(22px, 7vw, 10vw) clamp(64px, 10vh, 120px);
+            background: var(--bg-color);
+        }
+
+        #hero::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(138, 43, 226, 0.5), rgba(0, 255, 255, 0.35), transparent);
+            z-index: 4;
+        }
+
+        .hero-media {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+            background: #030305;
+        }
+
+        .video-bg {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 78% 28%, rgba(138, 43, 226, 0.20), transparent 54%),
+                radial-gradient(ellipse at 12% 86%, rgba(0, 255, 255, 0.08), transparent 54%),
+                linear-gradient(135deg, #050508 0%, #080811 50%, #030305 100%);
+        }
+
+        .video-bg::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+            background-size: 64px 64px;
+            -webkit-mask-image: radial-gradient(ellipse at 68% 42%, black 5%, transparent 72%);
+            mask-image: radial-gradient(ellipse at 68% 42%, black 5%, transparent 72%);
+            opacity: 0.65;
+        }
+
+        .video-bg video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            min-width: 100%;
+            min-height: 100%;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+            object-position: right center;
+            opacity: 0.35;
+        }
+
+        .hero-vignette {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            background:
+                linear-gradient(90deg, rgba(3, 3, 5, 0.96) 0%, rgba(3, 3, 5, 0.62) 46%, rgba(3, 3, 5, 0.12) 82%, transparent 100%),
+                linear-gradient(0deg, var(--bg-color) 0%, rgba(3, 3, 5, 0.28) 32%, transparent 64%);
+        }
+
+        .scanlines {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.18),
+                rgba(0, 0, 0, 0.18) 1px,
+                transparent 1px,
+                transparent 3px
+            );
+            opacity: 0.45;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 3;
+            width: 100%;
+            max-width: 1120px;
+        }
+
+        /* --- OS SWITCHER (top right, inside #hero) --- */
+        .os-switcher {
+            position: absolute;
+            top: clamp(18px, 4vh, 40px);
+            right: clamp(18px, 4vw, 48px);
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px;
+            border: 1px solid var(--border-soft);
+            border-radius: 14px;
+            background: rgba(8, 8, 13, 0.72);
+            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+        }
+
+        .os-btn {
+            position: relative;
+            width: clamp(38px, 3.2vw, 46px);
+            aspect-ratio: 1;
+            padding: 0;
+            display: inline-grid;
+            place-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 9px;
+            background: rgba(255, 255, 255, 0.02);
+            color: #8d8d9c;
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+        }
+
+        .os-btn svg {
+            width: clamp(16px, 1.5vw, 20px);
+            height: clamp(16px, 1.5vw, 20px);
+            fill: currentColor;
+            pointer-events: none;
+        }
+
+        .os-btn:hover,
+        .os-btn:focus-visible {
+            color: #ffffff;
+            border-color: rgba(0, 255, 255, 0.52);
+            background: rgba(0, 255, 255, 0.07);
+            transform: translateY(-1px);
+        }
+
+        .os-btn:active {
+            transform: scale(0.95);
+        }
+
+        .os-btn--soon {
+            opacity: 0.5;
+        }
+
+        .os-btn--soon:hover,
+        .os-btn--soon:focus-visible {
+            opacity: 0.72;
+            color: #d7d7e2;
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.035);
+            transform: none;
+        }
+
+        .os-btn::after {
+            content: attr(data-os);
+            position: absolute;
+            top: calc(100% + 10px);
+            left: 50%;
+            transform: translate(-50%, -4px);
+            padding: 6px 9px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            background: rgba(10, 10, 14, 0.96);
+            color: #d6d6e2;
+            font-size: 10px;
+            line-height: 1.2;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+        }
+
+        .os-btn:hover::after,
+        .os-btn:focus-visible::after {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, 0);
+        }
+
+        .os-btn:first-child::after {
+            left: 0;
+            transform: translate(0, -4px);
+        }
+
+        .os-btn:first-child:hover::after,
+        .os-btn:first-child:focus-visible::after {
+            transform: translate(0, 0);
+        }
+
+        .os-btn:last-child::after {
+            left: auto;
+            right: 0;
+            transform: translate(0, -4px);
+        }
+
+        .os-btn:last-child:hover::after,
+        .os-btn:last-child:focus-visible::after {
+            transform: translate(0, 0);
+        }
+
+        /* --- LOGO: ANSI SHADOW BLOCK ART --- */
+        .logo {
+            margin: 0 0 clamp(10px, 1.6vh, 20px);
+            line-height: 1;
+            font-weight: 900;
+            max-width: 100%;
+            animation: heroIn 0.75s ease-out both;
+        }
+
+        .logo-art {
+            display: inline-block;
+            max-width: 100%;
+            white-space: pre;
+            overflow: hidden;
+            font-family: var(--font-mono);
+            font-size: clamp(4px, 1.65vw, 18px);
+            font-weight: 900;
+            line-height: 1.03;
+            letter-spacing: 0;
+            font-variant-ligatures: none;
+            text-shadow: none;
+            color: #c084fc;
+            user-select: none;
+        }
+
+        @supports ((background-clip: text) or (-webkit-background-clip: text)) {
+            .logo-art {
+                background-image: linear-gradient(100deg, #7c3aed 0%, #a855f7 30%, #d8b4fe 48%, #22d3ee 72%, #67e8f9 100%);
+                background-size: 200% 100%;
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
+                -webkit-text-fill-color: transparent;
+                animation: logoShift 12s linear infinite;
+            }
+        }
+
+        @keyframes logoShift {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        @keyframes heroIn {
+            from {
+                opacity: 0;
+                transform: translateY(14px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slogan {
+            display: inline-block;
+            margin-bottom: clamp(24px, 4vh, 36px);
+            padding: 7px 13px;
+            border-left: 2px solid var(--accent-primary);
+            background: rgba(3, 3, 5, 0.56);
+            color: var(--accent-secondary);
+            font-size: clamp(12px, 1.3vw, 18px);
+            letter-spacing: clamp(2px, 0.35vw, 5px);
+            text-transform: uppercase;
+            -webkit-backdrop-filter: blur(6px);
+            backdrop-filter: blur(6px);
+            animation: heroIn 0.75s 0.08s ease-out both;
+        }
+
+        /* --- BUTTONS --- */
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: clamp(10px, 1.4vw, 16px);
+            max-width: 100%;
+            animation: heroIn 0.75s 0.16s ease-out both;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            min-height: clamp(48px, 6vh, 58px);
+            padding: var(--btn-padding);
+            border-radius: 8px;
+            font-family: var(--font-mono);
+            font-size: var(--btn-font-size);
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            text-decoration: none;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: transform 0.22s ease, background 0.22s ease, color 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+        }
+
+        .btn svg {
+            width: 1.15em;
+            height: 1.15em;
+            flex: 0 0 auto;
+            fill: currentColor;
+        }
+
+        .btn-primary {
+            color: #ffffff;
+            background: linear-gradient(135deg, #8a2be2 0%, #7c3aed 45%, #6d28d9 100%);
+            border: 1px solid rgba(192, 132, 252, 0.72);
+            box-shadow:
+                0 12px 32px rgba(138, 43, 226, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.16);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, #9a3bef 0%, #8b5cf6 45%, #7c3aed 100%);
+            box-shadow:
+                0 18px 46px rgba(138, 43, 226, 0.42),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0) scale(0.985);
+        }
+
+        .btn-secondary {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.035);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            border-color: rgba(0, 255, 255, 0.46);
+            background: rgba(0, 255, 255, 0.055);
+            box-shadow: 0 12px 30px rgba(0, 255, 255, 0.06);
+        }
+
+        .btn-secondary:active {
+            transform: translateY(0) scale(0.985);
+        }
+
+        /* --- SECTIONS --- */
+        #features {
+            padding: clamp(72px, 10vw, 130px) clamp(22px, 8vw, 10%);
+            background: linear-gradient(to bottom, #030305 0%, #08080e 50%, #030305 100%);
+            border-top: 1px solid var(--border-soft);
+        }
+
+        .section-title {
+            margin-bottom: clamp(42px, 5vw, 64px);
+            color: #ffffff;
+            font-size: clamp(26px, 3vw, 42px);
+            font-weight: 700;
+            letter-spacing: 0.13em;
+            line-height: 1.2;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .section-title span {
+            color: #ffffff;
+        }
+
+        .section-title::after {
+            content: "";
+            display: block;
+            width: 56px;
+            height: 2px;
+            margin: 18px auto 0;
+            border-radius: 2px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            opacity: 0.9;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+            gap: clamp(18px, 2.5vw, 28px);
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            width: 100%;
+            padding: clamp(26px, 3vw, 38px);
+            border: 1px solid var(--border-violet);
+            border-radius: var(--radius);
+            background: linear-gradient(180deg, rgba(18, 18, 26, 0.86) 0%, rgba(9, 9, 14, 0.9) 100%);
+            color: inherit;
+            text-align: left;
+            cursor: pointer;
+            overflow: hidden;
+            transition: transform 0.32s ease, border-color 0.32s ease, box-shadow 0.32s ease, background 0.32s ease;
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-secondary), transparent);
+            transform: scaleX(0);
+            transform-origin: center;
+            transition: transform 0.38s ease;
+        }
+
+        .card:hover,
+        .card:focus-visible {
+            transform: translateY(-6px);
+            border-color: rgba(0, 255, 255, 0.44);
+            background: linear-gradient(180deg, rgba(22, 22, 32, 0.94) 0%, rgba(10, 10, 16, 0.94) 100%);
+            box-shadow:
+                0 22px 54px rgba(0, 0, 0, 0.44),
+                0 0 34px rgba(0, 255, 255, 0.06);
+        }
+
+        .card:hover::before,
+        .card:focus-visible::before {
+            transform: scaleX(1);
+        }
+
+        .card:active {
+            transform: translateY(-2px) scale(0.992);
+            transition-duration: 0.08s;
+        }
+
+        .card h3 {
+            margin-bottom: 14px;
+            color: #ffffff;
+            font-size: clamp(18px, 1.5vw, 24px);
+            line-height: 1.25;
+        }
+
+        .card p {
+            color: #9aa0ac;
+            font-size: clamp(13px, 1vw, 16px);
+            line-height: 1.7;
+        }
+
+        .card-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: auto;
+            padding-top: clamp(22px, 3vw, 30px);
+            color: #6f7484;
+            font-size: clamp(10px, 0.78vw, 12px);
+            letter-spacing: 0.11em;
+            text-transform: uppercase;
+            transition: color 0.25s ease;
+        }
+
+        .card-cta svg {
+            width: 14px;
+            height: 14px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: transform 0.25s ease;
+        }
+
+        .card:hover .card-cta,
+        .card:focus-visible .card-cta {
+            color: var(--accent-secondary);
+        }
+
+        .card:hover .card-cta svg,
+        .card:focus-visible .card-cta svg {
+            transform: translateX(4px);
+        }
+
+        /* --- HOW IT WORKS --- */
+        #how-it-works {
+            padding: clamp(72px, 10vw, 130px) clamp(22px, 8vw, 10%);
+            background: #030305;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.035);
+        }
+
+        .steps-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: clamp(26px, 4vw, 60px);
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .step {
+            flex: 1 1 200px;
+            max-width: 300px;
+            text-align: center;
+        }
+
+        .step-number {
+            margin-bottom: 10px;
+            color: var(--accent-primary);
+            font-size: clamp(40px, 5vw, 64px);
+            font-weight: 900;
+            line-height: 1;
+            opacity: 0.58;
+        }
+
+        .step h4 {
+            margin-bottom: 10px;
+            color: #ffffff;
+            font-size: clamp(16px, 1.2vw, 20px);
+        }
+
+        .step p {
+            color: #888e9c;
+            font-size: clamp(13px, 0.9vw, 15px);
+            line-height: 1.7;
+        }
+
+        /* --- DONATE --- */
+        #donate {
+            padding: clamp(72px, 10vw, 130px) clamp(22px, 8vw, 10%);
+            background: linear-gradient(to top, #08080e, #030305);
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .donate-card {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: clamp(30px, 4vw, 60px);
+            border: 1px solid rgba(138, 43, 226, 0.38);
+            border-radius: 16px;
+            background:
+                radial-gradient(ellipse at top, rgba(138, 43, 226, 0.13), transparent 62%),
+                rgba(12, 12, 18, 0.84);
+            box-shadow: 0 0 60px rgba(138, 43, 226, 0.08);
+        }
+
+        .donate-card h3 {
+            margin-bottom: 15px;
+            color: #ffffff;
+            font-size: clamp(20px, 2vw, 28px);
+        }
+
+        .donate-card p {
+            margin-bottom: 25px;
+            color: #9aa0ac;
+            font-size: clamp(14px, 1vw, 16px);
+        }
+
+        .btn-donate {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-height: 50px;
+            padding: 14px 32px;
+            border: 1px solid rgba(0, 255, 255, 0.55);
+            border-radius: 7px;
+            background: transparent;
+            color: var(--accent-secondary);
+            font-family: var(--font-mono);
+            font-size: clamp(13px, 1vw, 15px);
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-decoration: none;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+        }
+
+        .btn-donate:hover {
+            background: var(--accent-secondary);
+            color: #000000;
+            box-shadow: 0 0 34px rgba(0, 255, 255, 0.34);
+            transform: translateY(-2px);
+        }
+
+        .btn-donate:active {
+            transform: translateY(0) scale(0.985);
+        }
+
+        .btn-donate svg {
+            width: 22px;
+            height: 22px;
+            fill: currentColor;
+        }
+
+        /* --- FOOTER --- */
+        footer {
+            padding: 40px clamp(20px, 5vw, 60px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            color: #5d6270;
+            font-size: clamp(11px, 0.8vw, 14px);
+            text-align: center;
+        }
+
+        footer a {
+            color: var(--accent-secondary);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* --- MODALS --- */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(16px, 3vw, 32px);
+            background: rgba(0, 0, 0, 0.8);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.25s ease, visibility 0.25s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .modal-overlay.letter-modal {
+            z-index: 3000;
+        }
+
+        .modal-content {
+            position: relative;
+            width: 100%;
+            max-width: 680px;
+            max-height: min(90vh, 900px);
+            overflow-y: auto;
+            padding: clamp(26px, 4vw, 50px);
+            border: 1px solid rgba(138, 43, 226, 0.45);
+            border-radius: 16px;
+            background: linear-gradient(180deg, rgba(16, 16, 24, 0.99) 0%, rgba(8, 8, 12, 0.99) 100%);
+            box-shadow:
+                0 34px 100px rgba(0, 0, 0, 0.8),
+                0 0 56px rgba(138, 43, 226, 0.14);
+            transform: translateY(18px) scale(0.98);
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .modal-content.module-modal__content {
+            max-width: 880px;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0) scale(1);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 18px;
+            z-index: 2;
+            width: 34px;
+            height: 34px;
+            display: grid;
+            place-items: center;
+            border: 0;
+            border-radius: 8px;
+            background: transparent;
+            color: #ffffff;
+            font-family: var(--font-mono);
+            font-size: 26px;
+            line-height: 1;
+            opacity: 0.65;
+            cursor: pointer;
+            transition: opacity 0.2s ease, background 0.2s ease;
+        }
+
+        .close-btn:hover {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        .modal-kicker {
+            display: inline-block;
+            margin-bottom: 12px;
+            color: var(--accent-secondary);
+            font-size: clamp(10px, 0.78vw, 12px);
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 18px;
+            padding-right: 28px;
+            color: #ffffff;
+            font-size: clamp(22px, 2.5vw, 32px);
+            line-height: 1.25;
+        }
+
+        .modal-content p {
+            margin-bottom: 18px;
+            color: #b0b0bc;
+            font-size: clamp(14px, 1vw, 16px);
+            line-height: 1.8;
+        }
+
+        .modal-content .highlight {
+            color: var(--accent-secondary);
+            font-weight: 700;
+        }
+
+        .download-action {
+            margin-top: 30px;
+            padding-top: 22px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .download-action .btn {
+            width: 100%;
+        }
+
+        .download-status {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 18px;
+            padding: 14px 16px;
+            border: 1px solid rgba(0, 255, 255, 0.18);
+            border-radius: 10px;
+            background: rgba(0, 255, 255, 0.045);
+        }
+
+        .download-status__icon {
+            flex: 0 0 auto;
+            display: grid;
+            place-items: center;
+            width: 22px;
+            height: 22px;
+            margin-top: 1px;
+            border-radius: 50%;
+            background: rgba(0, 255, 255, 0.12);
+            color: var(--accent-secondary);
+        }
+
+        .download-status__icon svg {
+            width: 12px;
+            height: 12px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2.6;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .download-status p {
+            margin: 0;
+            color: #b8bdc9;
+            font-size: clamp(12px, 0.9vw, 14px);
+            line-height: 1.65;
+        }
+
+        .support-btn {
+            margin-top: 0;
+        }
+
+        /* --- VIDEO PLACEHOLDER --- */
+        .video-placeholder {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            width: 100%;
+            height: clamp(200px, 38vh, 380px);
+            margin-top: clamp(20px, 3vh, 30px);
+            overflow: hidden;
+            border: 1px solid rgba(0, 255, 255, 0.18);
+            border-radius: 12px;
+            background:
+                radial-gradient(ellipse at center, rgba(138, 43, 226, 0.14), transparent 66%),
+                #050508;
+        }
+
+        .video-placeholder::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 32px 32px;
+            -webkit-mask-image: radial-gradient(ellipse at center, black 10%, transparent 72%);
+            mask-image: radial-gradient(ellipse at center, black 10%, transparent 72%);
+        }
+
+        .video-placeholder__tag {
+            position: absolute;
+            top: 14px;
+            left: 16px;
+            z-index: 1;
+            padding: 4px 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            color: #6f7484;
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .play-icon {
+            position: relative;
+            z-index: 1;
+            width: clamp(54px, 6vw, 68px);
+            height: clamp(54px, 6vw, 68px);
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(0, 255, 255, 0.52);
+            border-radius: 50%;
+            background: rgba(0, 255, 255, 0.055);
+            box-shadow: 0 0 34px rgba(0, 255, 255, 0.12);
+        }
+
+        .play-icon svg {
+            width: 22px;
+            height: 22px;
+            margin-left: 3px;
+            fill: var(--accent-secondary);
+        }
+
+        .video-placeholder__label {
+            position: relative;
+            z-index: 1;
+            color: #808695;
+            font-size: clamp(11px, 0.9vw, 13px);
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+        }
+
+        /* --- TOAST --- */
+        .toast {
+            position: fixed;
+            right: clamp(16px, 3vw, 32px);
+            bottom: clamp(16px, 3vw, 32px);
+            z-index: 4000;
+            width: min(390px, calc(100vw - 32px));
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px 18px;
+            border: 1px solid rgba(0, 255, 255, 0.36);
+            border-radius: 12px;
+            background: rgba(10, 10, 15, 0.97);
+            box-shadow:
+                0 20px 50px rgba(0, 0, 0, 0.55),
+                0 0 30px rgba(0, 255, 255, 0.08);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(18px);
+            transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0.28s;
+        }
+
+        .toast.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .toast__dot {
+            flex: 0 0 auto;
+            width: 8px;
+            height: 8px;
+            margin-top: 6px;
+            border-radius: 50%;
+            background: var(--accent-secondary);
+            box-shadow: 0 0 10px var(--accent-secondary);
+        }
+
+        .toast strong {
+            display: block;
+            margin-bottom: 4px;
+            color: #ffffff;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .toast p {
+            margin: 0;
+            color: #9a9fae;
+            font-size: 12px;
+            line-height: 1.55;
+        }
+
+        .toast-close {
+            flex: 0 0 auto;
+            margin-left: auto;
+            padding: 0 2px;
+            border: 0;
+            background: transparent;
+            color: #7b8090;
+            font-family: var(--font-mono);
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .toast-close:hover {
+            color: #ffffff;
+        }
+
+        /* --- ADAPTIVE --- */
+        @media (max-width: 768px) {
+            #hero {
+                align-items: center;
+                padding: 100px 20px 64px;
+                text-align: center;
+            }
+
+            .os-switcher {
+                top: 16px;
+                right: 16px;
+                gap: 4px;
+                padding: 5px;
+                border-radius: 12px;
+            }
+
+            .os-btn {
+                width: 40px;
+            }
+
+            .logo-art {
+                font-size: clamp(4px, 2.1vw, 18px);
+            }
+
+            .hero-vignette {
+                background:
+                    linear-gradient(0deg, rgba(3, 3, 5, 0.96) 0%, rgba(3, 3, 5, 0.56) 48%, rgba(3, 3, 5, 0.18) 100%),
+                    linear-gradient(90deg, rgba(3, 3, 5, 0.35), transparent 40%, rgba(3, 3, 5, 0.35));
+            }
+
+            .slogan {
+                border-left: 0;
+                border-bottom: 2px solid var(--accent-primary);
+                font-size: clamp(10px, 2.8vw, 13px);
+                letter-spacing: 2px;
+            }
+
+            .button-group {
+                flex-direction: column;
+                width: 100%;
+                max-width: 320px;
+                gap: 10px;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .card {
+                padding: 26px 22px;
+            }
+
+            .modal-content {
+                padding: 28px 20px;
+                max-height: 92vh;
+            }
+
+            .modal-content h2 {
+                font-size: clamp(21px, 5.5vw, 27px);
+            }
+
+            .video-placeholder {
+                height: clamp(180px, 34vh, 300px);
+            }
+
+            .toast {
+                right: 16px;
+                bottom: 16px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HERO -->
+    <section id="hero">
+        <div class="hero-media" aria-hidden="true">
+            <div class="video-bg" id="videoContainer">
+                <!-- Put your demo video here:
+                <video autoplay loop muted playsinline>
+                    <source src="demo.mp4" type="video/mp4">
+                </video>
+                -->
+            </div>
+            <div class="hero-vignette"></div>
+            <div class="scanlines"></div>
+        </div>
+
+        <!-- OS switcher: top right, inside #hero -->
+        <nav class="os-switcher" aria-label="Choose your operating system">
+            <button class="os-btn"
+                    id="windowsBtn"
+                    type="button"
+                    data-os="Windows"
+                    data-i18n-aria="windows_aria"
+                    aria-label="Download Reshal for Windows">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/>
+                </svg>
+            </button>
+            <button class="os-btn"
+                    id="linuxBtn"
+                    type="button"
+                    data-os="Linux"
+                    data-i18n-aria="linux_aria"
+                    aria-label="Download Reshal for Linux">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.025.134.063.198.114.333l.003.003c.391.778 1.113 1.132 1.884 1.071.771-.06 1.592-.536 2.257-1.306.631-.765 1.683-1.084 2.378-1.503.348-.199.629-.469.649-.853.023-.4-.2-.811-.714-1.376v-.097l-.003-.003c-.17-.2-.25-.535-.338-.926-.085-.401-.182-.786-.492-1.046h-.003c-.059-.054-.123-.067-.188-.135a.357.357 0 00-.19-.064c.431-1.278.264-2.55-.173-3.694-.533-1.41-1.465-2.638-2.175-3.483-.796-1.005-1.576-1.957-1.56-3.368.026-2.152.236-6.133-3.544-6.139zm.529 3.405h.013c.213 0 .396.062.584.198.19.135.33.332.438.533.105.259.158.459.166.724 0-.02.006-.04.006-.06v.105a.086.086 0 01-.004-.021l-.004-.024a1.807 1.807 0 01-.15.706.953.953 0 01-.213.335.71.71 0 00-.088-.042c-.104-.045-.198-.064-.284-.133a1.312 1.312 0 00-.22-.066c.05-.06.146-.133.183-.198.053-.128.082-.264.088-.402v-.02a1.21 1.21 0 00-.061-.4c-.045-.134-.101-.2-.183-.333-.084-.066-.167-.132-.267-.132h-.016c-.093 0-.176.03-.262.132a.8.8 0 00-.205.334 1.18 1.18 0 00-.09.4v.019c.002.089.008.179.02.267-.193-.067-.438-.135-.607-.202a1.635 1.635 0 01-.018-.2v-.02a1.772 1.772 0 01.15-.768c.082-.22.232-.406.43-.533a.985.985 0 01.594-.2zm-2.962.059h.036c.142 0 .27.048.399.135.146.129.264.288.344.465.09.199.14.4.153.667v.004c.007.134.006.2-.002.266v.08c-.03.007-.056.018-.083.024-.152.055-.274.135-.393.2.012-.09.013-.18.003-.267v-.015c-.012-.133-.04-.2-.082-.333a.613.613 0 00-.166-.267.248.248 0 00-.183-.064h-.021c-.071.006-.13.04-.186.132a.552.552 0 00-.12.27.944.944 0 00-.023.33v.015c.012.135.037.2.08.334.046.134.098.2.166.268.01.009.02.018.034.024-.07.057-.117.07-.176.136a.304.304 0 01-.131.068 2.62 2.62 0 01-.275-.402 1.772 1.772 0 01-.155-.667 1.759 1.759 0 01.08-.668 1.43 1.43 0 01.283-.535c.128-.133.26-.2.418-.2zm1.37 1.706c.332 0 .733.065 1.216.399.293.2.523.269 1.052.468h.003c.255.136.405.266.478.399v-.131a.571.571 0 01.016.47c-.123.31-.516.643-1.063.842v.002c-.268.135-.501.333-.775.465-.276.135-.588.292-1.012.267a1.139 1.139 0 01-.448-.067 3.566 3.566 0 01-.322-.198c-.195-.135-.363-.332-.612-.465v-.005h-.005c-.4-.246-.616-.512-.686-.71-.07-.268-.005-.47.193-.6.224-.135.38-.271.483-.336.104-.074.143-.102.176-.131h.002v-.003c.169-.202.436-.47.839-.601.139-.036.294-.065.466-.065zm2.8 2.142c.358 1.417 1.196 3.475 1.735 4.473.286.534.855 1.659 1.102 3.024.156-.005.33.018.513.064.646-1.671-.546-3.467-1.089-3.966-.22-.2-.232-.335-.123-.335.59.534 1.365 1.572 1.646 2.757.13.535.16 1.104.021 1.67.067.028.135.06.205.067 1.032.534 1.413.938 1.23 1.537v-.043c-.06-.003-.12 0-.18 0h-.016c.151-.467-.182-.825-1.065-1.224-.915-.4-1.646-.336-1.77.465-.008.043-.013.066-.018.135-.068.023-.139.053-.209.064-.43.268-.662.669-.793 1.187-.13.533-.17 1.156-.205 1.869v.003c-.02.334-.17.838-.319 1.35-1.5 1.072-3.58 1.538-5.348.334a2.645 2.645 0 00-.402-.533 1.45 1.45 0 00-.275-.333c.182 0 .338-.03.465-.067a.615.615 0 00.314-.334c.108-.267 0-.697-.345-1.163-.345-.467-.931-.995-1.788-1.521-.63-.4-.986-.87-1.15-1.396-.165-.534-.143-1.085-.015-1.645.245-1.07.873-2.11 1.274-2.763.107-.065.037.135-.408.974-.396.751-1.14 2.497-.122 3.854a8.123 8.123 0 01.647-2.876c.564-1.278 1.743-3.504 1.836-5.268.048.036.217.135.289.202.218.133.38.333.59.465.21.201.477.335.876.335.039.003.075.006.11.006.412 0 .73-.134.997-.268.29-.134.52-.334.74-.4h.005c.467-.135.835-.402 1.044-.7zm2.185 8.958c.037.6.343 1.245.882 1.377.588.134 1.434-.333 1.791-.765l.211-.01c.315-.007.577.01.847.268l.003.003c.208.199.305.53.391.876.085.4.154.78.409 1.066.486.527.645.906.636 1.14l.003-.007v.018l-.003-.012c-.015.262-.185.396-.498.595-.63.401-1.746.712-2.457 1.57-.618.737-1.37 1.14-2.036 1.191-.664.053-1.237-.2-1.574-.898l-.005-.003c-.21-.4-.12-1.025.056-1.69.176-.668.428-1.344.463-1.897.037-.714.076-1.335.195-1.814.12-.465.308-.797.641-.984l.045-.022zm-10.814.049h.01c.053 0 .105.005.157.014.376.055.706.333 1.023.752l.91 1.664.003.003c.243.533.754 1.064 1.189 1.637.434.598.77 1.131.729 1.57v.006c-.057.744-.48 1.148-1.125 1.294-.645.135-1.52.002-2.395-.464-.968-.536-2.118-.469-2.857-.602-.369-.066-.61-.2-.723-.4-.11-.2-.113-.602.123-1.23v-.004l.002-.003c.117-.334.03-.752-.027-1.118-.055-.401-.083-.71.043-.94.16-.334.396-.4.69-.533.294-.135.64-.202.915-.47h.002v-.002c.256-.268.445-.601.668-.838.19-.201.38-.336.663-.336zm7.159-9.074c-.435.201-.945.535-1.488.535-.542 0-.97-.267-1.28-.466-.154-.134-.28-.268-.373-.335-.164-.134-.144-.333-.074-.333.109.016.129.134.199.2.096.066.215.2.36.333.292.2.68.467 1.167.467.485 0 1.053-.267 1.398-.466.195-.135.445-.334.648-.467.156-.136.149-.267.279-.267.128.016.034.134-.147.332a8.097 8.097 0 01-.69.468zm-1.082-1.583V5.64c-.006-.02.013-.042.029-.05.074-.043.18-.027.26.004.063 0 .16.067.15.135-.006.049-.085.066-.135.066-.055 0-.092-.043-.141-.068-.052-.018-.146-.008-.163-.065zm-.551 0c-.02.058-.113.049-.166.066-.047.025-.086.068-.14.068-.05 0-.13-.02-.136-.068-.01-.066.088-.133.15-.133.08-.031.184-.047.259-.005.019.009.036.03.03.05v.02h.003z"/>
+                </svg>
+            </button>
+            <button class="os-btn os-btn--soon"
+                    id="macBtn"
+                    type="button"
+                    data-os="macOS · Soon"
+                    data-i18n-aria="macos_aria"
+                    aria-label="macOS version — coming soon">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/>
+                </svg>
+            </button>
+        </nav>
+
+        <div class="hero-content">
+            <h1 class="logo" aria-label="RESHAL">
+                <span class="logo-art" aria-hidden="true">██████╗ ███████╗███████╗██╗  ██╗ █████╗ ██╗     
+██╔══██╗██╔════╝██╔════╝██║  ██║██╔══██╗██║     
+██████╔╝█████╗  ███████╗███████║███████║██║     
+██╔══██╗██╔══╝  ╚════██║██╔══██║██╔══██║██║     
+██║  ██║███████╗███████║██║  ██║██║  ██║███████╗
+╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝</span>
+            </h1>
+
+            <p class="slogan" data-i18n="slogan">COMMAND YOUR PC</p>
+
+            <div class="button-group">
+                <a href="https://github.com/твой_профиль/Reshal_bace/releases/latest/download/Reshal.exe"
+                   class="btn btn-primary"
+                   id="downloadBtn"
+                   download>
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M12 3a1 1 0 0 1 1 1v8.586l2.293-2.293a1 1 0 0 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 1.414-1.414L11 12.586V4a1 1 0 0 1 1-1ZM5 19a1 1 0 0 1 1-1h12a1 1 0 1 1 0 2H6a1 1 0 0 1-1-1Z"/>
+                    </svg>
+                    <span data-i18n="download_btn">Download</span>
+                </a>
+                <a href="https://github.com/твой_профиль/Reshal_bace"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="btn btn-secondary">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                    GitHub
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- CORE MODULES -->
+    <section id="features">
+        <h2 class="section-title"><span data-i18n="modules_title">Core Modules</span></h2>
+        <div class="grid-container">
+            <article class="card"
+                     role="button"
+                     tabindex="0"
+                     aria-haspopup="dialog"
+                     data-module="terminal">
+                <h3 data-i18n="mod_terminal_title">Terminal Mode</h3>
+                <p data-i18n="mod_terminal_desc">Reshal Terminal solves any dev problems. Run complex scripts, manage files, and automate your routine using natural language.</p>
+                <span class="card-cta">
+                    <span data-i18n="card_cta">Open preview</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </span>
+            </article>
+            <article class="card"
+                     role="button"
+                     tabindex="0"
+                     aria-haspopup="dialog"
+                     data-module="vision">
+                <h3 data-i18n="mod_vision_title">Vision Mode (Soon)</h3>
+                <p data-i18n="mod_vision_desc">See what the AI sees. With integrated YOLO and OCR, Reshal analyzes your screen, finds UI elements, and physically moves the cursor.</p>
+                <span class="card-cta">
+                    <span data-i18n="card_cta">Open preview</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </span>
+            </article>
+            <article class="card"
+                     role="button"
+                     tabindex="0"
+                     aria-haspopup="dialog"
+                     data-module="admin">
+                <h3 data-i18n="mod_admin_title">Admin Mode</h3>
+                <p data-i18n="mod_admin_desc">Type /admin to dive deep. Access the raw terminal, use internal system commands, check paths, and take full control.</p>
+                <span class="card-cta">
+                    <span data-i18n="card_cta">Open preview</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </span>
+            </article>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="how-it-works">
+        <h2 class="section-title"><span data-i18n="how_title">How it Works</span></h2>
+        <div class="steps-container">
+            <div class="step">
+                <div class="step-number">01</div>
+                <h4 data-i18n="step1_title">Download</h4>
+                <p data-i18n="step1_desc">Get the single executable file. No installation, no dependencies.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">02</div>
+                <h4 data-i18n="step2_title">Run</h4>
+                <p data-i18n="step2_desc">Open the terminal and start typing in plain English or Russian.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">03</div>
+                <h4 data-i18n="step3_title">Automate</h4>
+                <p data-i18n="step3_desc">Reshal executes commands, manages files, and learns your workflow.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- DONATE -->
+    <section id="donate">
+        <div class="donate-card">
+            <h3 data-i18n="donate_title">Buy me a coffee</h3>
+            <p data-i18n="donate_desc">If Reshal saves you time, consider supporting the project. Every donation helps keep the servers running and the updates coming.</p>
+            <a href="https://donationalerts.com/r/your_link"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="btn-donate">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/>
+                </svg>
+                <span data-i18n="donate_btn">Donate</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>© 2026 Reshal. Built with passion. <a href="https://github.com/твой_профиль/Reshal_bace">GitHub</a>.</p>
+    </footer>
+
+    <!-- MODULE PREVIEW MODAL -->
+    <div class="modal-overlay"
+         id="moduleModal"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="moduleModalTitle"
+         aria-hidden="true"
+         inert>
+        <div class="modal-content module-modal__content" tabindex="-1">
+            <button class="close-btn"
+                    type="button"
+                    data-close
+                    data-i18n-aria="close_label"
+                    aria-label="Close">&times;</button>
+            <span class="modal-kicker" data-i18n="preview_kicker">Preview</span>
+            <h2 id="moduleModalTitle">Terminal Mode in Action</h2>
+            <p id="moduleModalDesc">Watch how Reshal turns a plain-language request into real terminal commands — safely and instantly.</p>
+            <div class="video-placeholder" role="img" aria-label="Video coming soon">
+                <span class="video-placeholder__tag">DEMO</span>
+                <span class="play-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </span>
+                <span class="video-placeholder__label" data-i18n="video_soon">Video coming soon...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- DOWNLOAD / LETTER MODAL -->
+    <div class="modal-overlay letter-modal"
+         id="letterModal"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="letterModalTitle"
+         aria-hidden="true"
+         inert>
+        <div class="modal-content" tabindex="-1">
+            <button class="close-btn"
+                    type="button"
+                    data-close
+                    data-i18n-aria="close_label"
+                    aria-label="Close">&times;</button>
+            <span class="modal-kicker" data-i18n="letter_kicker">A note from the developer</span>
+            <h2 id="letterModalTitle" data-i18n="letter_title">Why I built Reshal</h2>
+            <p data-i18n="letter_p1">The terminal is the most powerful tool a developer has. But it's also rigid. You have to remember exact syntax, paths, and flags. I wanted to change that.</p>
+            <p data-i18n-html="letter_p2_html">Reshal is an experiment: what if the terminal understood you? What if you could just say <span class="highlight">"find all python files and replace TODO with DONE"</span> and it just worked?</p>
+            <p data-i18n="letter_p3">This is an open-source project. No hidden subscriptions, no cloud lock-in. Just a tool that respects your privacy and your time. If it saves you even 10 minutes a day, consider supporting its development.</p>
+
+            <div class="download-action">
+                <div class="download-status">
+                    <span class="download-status__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+                    </span>
+                    <p data-i18n="download_modal_status">Your download is running in the background. Check your Downloads folder — and stay right here.</p>
+                </div>
+                <a href="https://donationalerts.com/r/your_link"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="btn btn-secondary support-btn">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/>
+                    </svg>
+                    <span data-i18n="manual_dl">Support the project</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true">
+        <span class="toast__dot" aria-hidden="true"></span>
+        <div>
+            <strong id="toastTitle">macOS version is coming soon.</strong>
+            <p id="toastText">We are working on it!</p>
+        </div>
+        <button class="toast-close" id="toastClose" type="button" aria-label="Close notification">&times;</button>
+    </div>
+
+    <script>
+        (() => {
+            "use strict";
+
+            /* ---------- TRANSLATIONS ---------- */
+            const translations = {
+                en: {
+                    slogan: "COMMAND YOUR PC",
+                    download_btn: "Download",
+                    modules_title: "Core Modules",
+                    how_title: "How it Works",
+                    card_cta: "Open preview",
+                    preview_kicker: "Preview",
+                    video_soon: "Video coming soon...",
+
+                    mod_terminal_title: "Terminal Mode",
+                    mod_terminal_desc: "Reshal Terminal solves any dev problems. Run complex scripts, manage files, and automate your routine using natural language.",
+                    mod_vision_title: "Vision Mode (Soon)",
+                    mod_vision_desc: "See what the AI sees. With integrated YOLO and OCR, Reshal analyzes your screen, finds UI elements, and physically moves the cursor.",
+                    mod_admin_title: "Admin Mode",
+                    mod_admin_desc: "Type /admin to dive deep. Access the raw terminal, use internal system commands, check paths, and take full control.",
+
+                    terminal_modal_title: "Terminal Mode in Action",
+                    terminal_modal_desc: "Watch how Reshal turns a plain-language request into real terminal commands — safely and instantly.",
+                    vision_modal_title: "Vision Mode in Action",
+                    vision_modal_desc: "See how Reshal reads the screen, finds UI elements, and moves the cursor like a human.",
+                    admin_modal_title: "Admin Mode in Action",
+                    admin_modal_desc: "A look inside the raw terminal: internal commands, paths, and full system control.",
+
+                    step1_title: "Download",
+                    step1_desc: "Get the single executable file. No installation, no dependencies.",
+                    step2_title: "Run",
+                    step2_desc: "Open the terminal and start typing in plain English or Russian.",
+                    step3_title: "Automate",
+                    step3_desc: "Reshal executes commands, manages files, and learns your workflow.",
+
+                    donate_title: "Buy me a coffee",
+                    donate_desc: "If Reshal saves you time, consider supporting the project. Every donation helps keep the servers running and the updates coming.",
+                    donate_btn: "Donate",
+
+                    letter_kicker: "A note from the developer",
+                    letter_title: "Why I built Reshal",
+                    letter_p1: "The terminal is the most powerful tool a developer has. But it's also rigid. You have to remember exact syntax, paths, and flags. I wanted to change that.",
+                    letter_p2_html: "Reshal is an experiment: what if the terminal understood you? What if you could just say <span class=\"highlight\">\"find all python files and replace TODO with DONE\"</span> and it just worked?",
+                    letter_p3: "This is an open-source project. No hidden subscriptions, no cloud lock-in. Just a tool that respects your privacy and your time. If it saves you even 10 minutes a day, consider supporting its development.",
+                    manual_dl: "Support the project",
+                    download_modal_status: "Your download is running in the background. Check your Downloads folder — and stay right here.",
+
+                    mac_title: "Want to run it on a Mac?",
+                    mac_desc: "Buy me a Mac and I'll build a version just for you 😉",
+                    download_started: "Download started in the background.",
+                    download_started_desc: "Check your Downloads folder. You can stay right here.",
+                    setup_needed_title: "Download link is not set up yet.",
+                    setup_needed_desc: "Replace the placeholder link in index.html with your real GitHub release asset.",
+                    close_label: "Close",
+                    windows_aria: "Download Reshal for Windows",
+                    linux_aria: "Download Reshal for Linux",
+                    macos_aria: "macOS version — coming soon"
+                },
+                ru: {
+                    slogan: "УПРАВЛЯЙ СВОИМ ПК",
+                    download_btn: "Скачать",
+                    modules_title: "Основные модули",
+                    how_title: "Как это работает",
+                    card_cta: "Открыть превью",
+                    preview_kicker: "Превью",
+                    video_soon: "Видео скоро появится...",
+
+                    mod_terminal_title: "Терминальный режим",
+                    mod_terminal_desc: "Reshal Terminal решает любые проблемы разработчика. Сложные скрипты, управление файлами и автоматизация рутины с помощью естественного языка.",
+                    mod_vision_title: "Режим зрения (Скоро)",
+                    mod_vision_desc: "Увидь то, что видит ИИ. С интеграцией YOLO и OCR Reshal анализирует экран, находит элементы интерфейса и физически двигает курсор.",
+                    mod_admin_title: "Режим админа",
+                    mod_admin_desc: "Введи /admin для глубокого погружения. Доступ к чистому терминалу, внутренним командам и полный контроль.",
+
+                    terminal_modal_title: "Терминальный режим в действии",
+                    terminal_modal_desc: "Посмотри, как Reshal превращает обычную просьбу в последовательность команд терминала — безопасно и мгновенно.",
+                    vision_modal_title: "Режим зрения в действии",
+                    vision_modal_desc: "Демонстрация того, как Reshal распознает элементы интерфейса и управляет курсором.",
+                    admin_modal_title: "Режим админа в действии",
+                    admin_modal_desc: "Загляни в сырой терминал: внутренние команды, пути и полный контроль над системой.",
+
+                    step1_title: "Скачай",
+                    step1_desc: "Получи один исполняемый файл. Без установки и зависимостей.",
+                    step2_title: "Запусти",
+                    step2_desc: "Открой терминал и начни писать на русском или английском.",
+                    step3_title: "Автоматизируй",
+                    step3_desc: "Reshal выполняет команды, управляет файлами и учится твоим привычкам.",
+
+                    donate_title: "Поддержи проект",
+                    donate_desc: "Если Reshal экономит твое время, поддержи разработку. Любой донат помогает серверам работать, а обновлениям — выходить.",
+                    donate_btn: "Задонатить",
+
+                    letter_kicker: "Заметка от разработчика",
+                    letter_title: "Зачем я создал Reshal",
+                    letter_p1: "Терминал — самый мощный инструмент разработчика. Но он жесткий. Нужно помнить точный синтаксис, пути и флаги. Я захотел это изменить.",
+                    letter_p2_html: "Reshal — это эксперимент: что если терминал будет понимать тебя? Что если ты сможешь просто сказать <span class=\"highlight\">\"найди все python файлы и замени TODO на DONE\"</span>, и это сработает?",
+                    letter_p3: "Это open-source проект. Никаких скрытых подписок и привязки к облаку. Просто инструмент, который уважает твою приватность и время. Если он экономит тебе хотя бы 10 минут в день, поддержи разработку.",
+                    manual_dl: "Поддержать проект",
+                    download_modal_status: "Скачивание уже идёт в фоне. Проверь папку загрузок — и оставайся на сайте.",
+
+                    mac_title: "Хочешь запустить на Mac?",
+                    mac_desc: "Задонать мне на него — и я сделаю версию персонально под тебя 😉",
+                    download_started: "Скачивание началось в фоне.",
+                    download_started_desc: "Проверь папку загрузок. Можно остаться на сайте.",
+                    setup_needed_title: "Ссылка на скачивание ещё не настроена.",
+                    setup_needed_desc: "Замени ссылку-заглушку в index.html на реальный файл из GitHub Releases.",
+                    close_label: "Закрыть",
+                    windows_aria: "Скачать Reshal для Windows",
+                    linux_aria: "Скачать Reshal для Linux",
+                    macos_aria: "Версия для macOS — скоро"
+                }
+            };
+
+            const preferredLanguages = (navigator.languages && navigator.languages.length)
+                ? navigator.languages
+                : [navigator.language || navigator.userLanguage || "en"];
+            const lang = preferredLanguages
+                .map((code) => String(code).toLowerCase())
+                .map((code) => code.startsWith("ru") ? "ru" : code.startsWith("en") ? "en" : null)
+                .find(Boolean) || "en";
+            const dictionary = translations[lang] || translations.en;
+            const t = (key) => dictionary[key] ?? translations.en[key] ?? key;
+
+            document.documentElement.lang = lang;
+
+            document.querySelectorAll("[data-i18n]").forEach((el) => {
+                el.textContent = t(el.getAttribute("data-i18n"));
+            });
+
+            document.querySelectorAll("[data-i18n-html]").forEach((el) => {
+                el.innerHTML = t(el.getAttribute("data-i18n-html"));
+            });
+
+            document.querySelectorAll("[data-i18n-aria]").forEach((el) => {
+                el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria")));
+            });
+
+            /* ---------- MODAL HELPERS ---------- */
+            const moduleModal = document.getElementById("moduleModal");
+            const letterModal = document.getElementById("letterModal");
+            const moduleTitle = document.getElementById("moduleModalTitle");
+            const moduleDesc = document.getElementById("moduleModalDesc");
+            let lastFocused = null;
+
+            function openModal(modal) {
+                if (!modal) return;
+
+                document.querySelectorAll(".modal-overlay.active").forEach((open) => {
+                    open.classList.remove("active");
+                    open.setAttribute("aria-hidden", "true");
+                    open.setAttribute("inert", "");
+                });
+
+                lastFocused = document.activeElement;
+                modal.classList.add("active");
+                modal.removeAttribute("inert");
+                modal.setAttribute("aria-hidden", "false");
+                document.body.classList.add("modal-open");
+
+                const focusTarget = modal.querySelector(".close-btn") || modal.querySelector(".modal-content");
+                window.setTimeout(() => {
+                    if (focusTarget) focusTarget.focus({ preventScroll: true });
+                }, 40);
+            }
+
+            function closeModal(modal) {
+                if (!modal) return;
+
+                modal.classList.remove("active");
+                modal.setAttribute("aria-hidden", "true");
+                modal.setAttribute("inert", "");
+
+                if (!document.querySelector(".modal-overlay.active")) {
+                    document.body.classList.remove("modal-open");
+                }
+
+                if (lastFocused && document.contains(lastFocused)) {
+                    lastFocused.focus({ preventScroll: true });
+                }
+                lastFocused = null;
+            }
+
+            document.querySelectorAll("[data-close]").forEach((button) => {
+                button.addEventListener("click", () => {
+                    closeModal(button.closest(".modal-overlay"));
+                });
+            });
+
+            document.querySelectorAll(".modal-overlay").forEach((overlay) => {
+                overlay.addEventListener("click", (event) => {
+                    if (event.target === overlay) {
+                        closeModal(overlay);
+                    }
+                });
+            });
+
+            document.addEventListener("keydown", (event) => {
+                if (event.key === "Escape") {
+                    const activeModal = document.querySelector(".modal-overlay.active");
+                    if (activeModal) {
+                        event.preventDefault();
+                        closeModal(activeModal);
+                    }
+                }
+
+                if (event.key === "Tab") {
+                    const activeContent = document.querySelector(".modal-overlay.active .modal-content");
+                    if (!activeContent) return;
+
+                    const focusable = Array.from(activeContent.querySelectorAll(
+                        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+                    )).filter((el) => el.offsetParent !== null);
+
+                    if (!focusable.length) return;
+
+                    const first = focusable[0];
+                    const last = focusable[focusable.length - 1];
+
+                    if (event.shiftKey && document.activeElement === first) {
+                        event.preventDefault();
+                        last.focus();
+                    } else if (!event.shiftKey && document.activeElement === last) {
+                        event.preventDefault();
+                        first.focus();
+                    }
+                }
+            });
+
+            /* ---------- BACKGROUND DOWNLOAD ---------- */
+            /* Replace this URL with your real GitHub release asset. */
+            const DOWNLOAD_URL = "https://github.com/твой_профиль/Reshal_bace/releases/latest/download/Reshal.exe";
+            const DOWNLOAD_URL_IS_PLACEHOLDER = /твой_профиль|твой-профиль|your[_-]?(profile|username|user|link)/i.test(DOWNLOAD_URL);
+
+            function startDownload(statusTitle, statusText) {
+                if (!DOWNLOAD_URL_IS_PLACEHOLDER) {
+                    const link = document.createElement("a");
+                    link.href = DOWNLOAD_URL;
+                    link.download = "Reshal.exe";
+                    link.rel = "noopener";
+                    link.style.display = "none";
+                    document.body.appendChild(link);
+                    link.click();
+                    window.setTimeout(() => link.remove(), 1000);
+                    showToast(statusTitle, statusText, 5000);
+                    return true;
+                }
+
+                showToast(t("setup_needed_title"), t("setup_needed_desc"), 6500);
+                return false;
+            }
+
+            /* ---------- PRIMARY DOWNLOAD CTA ---------- */
+            const downloadBtn = document.getElementById("downloadBtn");
+            downloadBtn.addEventListener("click", (event) => {
+                if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                event.preventDefault();
+                if (startDownload(t("download_started"), t("download_started_desc"))) {
+                    openModal(letterModal);
+                }
+            });
+
+            /* ---------- OS SWITCHER BUTTONS (one build for every OS) ---------- */
+            ["windowsBtn", "linuxBtn"].forEach((id) => {
+                const button = document.getElementById(id);
+                if (!button) return;
+                button.addEventListener("click", () => {
+                    startDownload(t("download_started"), t("download_started_desc"));
+                });
+            });
+
+            /* ---------- CARD PREVIEW MODALS ---------- */
+            document.querySelectorAll(".card").forEach((card) => {
+                const openPreview = () => {
+                    const module = card.getAttribute("data-module");
+                    moduleTitle.textContent = t(`${module}_modal_title`);
+                    moduleDesc.textContent = t(`${module}_modal_desc`);
+                    openModal(moduleModal);
+                };
+
+                card.addEventListener("click", openPreview);
+                card.addEventListener("keydown", (event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        openPreview();
+                    }
+                });
+            });
+
+            /* ---------- TOAST ---------- */
+            const toast = document.getElementById("toast");
+            const toastTitle = document.getElementById("toastTitle");
+            const toastText = document.getElementById("toastText");
+            const toastClose = document.getElementById("toastClose");
+            let toastTimer = null;
+
+            function showToast(title, message, duration = 4500) {
+                toastTitle.textContent = title;
+                toastText.textContent = message;
+                toast.classList.add("show");
+                window.clearTimeout(toastTimer);
+                toastTimer = window.setTimeout(() => {
+                    toast.classList.remove("show");
+                }, duration);
+            }
+
+            toastClose.addEventListener("click", () => {
+                toast.classList.remove("show");
+                window.clearTimeout(toastTimer);
+            });
+
+            /* ---------- macOS COMING SOON ---------- */
+            const macBtn = document.getElementById("macBtn");
+            macBtn.addEventListener("click", () => {
+                showToast(t("mac_title"), t("mac_desc"), 6000);
+            });
+        })();
+    </script>
+</body>
+</html>
