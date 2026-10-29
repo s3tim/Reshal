@@ -1151,7 +1151,7 @@
             <p class="slogan" data-i18n="slogan">COMMAND YOUR PC</p>
 
             <div class="button-group">
-                <a href="https://github.com/твой_профиль/Reshal_bace/releases/latest/download/Reshal.exe"
+                <a href="https://github.com/s3tim/Reshal/releases/download/v0.1-beta/alpha.zip"
                    class="btn btn-primary"
                    id="downloadBtn"
                    download>
@@ -1160,7 +1160,17 @@
                     </svg>
                     <span data-i18n="download_btn">Download</span>
                 </a>
-                <a href="https://github.com/твой_профиль/Reshal_bace"
+                
+                <!-- ВОТ ЭТА КНОПКА ДОБАВЛЯЕТСЯ -->
+                <a href="https://forms.yandex.ru/cloud/6ae25f121f1eb5f5713ea3e6"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="btn btn-secondary">
+                   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                   <span>Feedback</span>
+                </a>
+
+                <a href="https://github.com/s3tim/Reshal"
                    target="_blank"
                    rel="noopener noreferrer"
                    class="btn btn-secondary">
@@ -1257,7 +1267,7 @@
 
     <!-- FOOTER -->
     <footer>
-        <p>© 2026 Reshal. Built with passion. <a href="https://github.com/твой_профиль/Reshal_bace">GitHub</a>.</p>
+        <p>© 2026 Reshal. Built with passion. <a href="https://github.com/s3tim/Reshal">GitHub</a>.</p>
     </footer>
 
     <!-- MODULE PREVIEW MODAL -->
@@ -1568,8 +1578,9 @@
 
             /* ---------- BACKGROUND DOWNLOAD ---------- */
             /* Replace this URL with your real GitHub release asset. */
-            const DOWNLOAD_URL = "https://github.com/твой_профиль/Reshal_bace/releases/latest/download/Reshal.exe";
-            const DOWNLOAD_URL_IS_PLACEHOLDER = /твой_профиль|твой-профиль|your[_-]?(profile|username|user|link)/i.test(DOWNLOAD_URL);
+            const DOWNLOAD_URL = "https://github.com/s3tim/Reshal/releases/download/v0.1-beta/alpha.zip";
+            const DOWNLOAD_URL_IS_PLACEHOLDER = /твой_профиль|const download_url = "https://github.com/s3tim/reshal/releases/download/v0.1-beta/alpha.zip";
+            const download_url_is_placeholder = false;|your[_-]?(profile|username|user|link)/i.test(DOWNLOAD_URL);
 
             function startDownload(statusTitle, statusText) {
                 if (!DOWNLOAD_URL_IS_PLACEHOLDER) {

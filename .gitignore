@@ -1,0 +1,4 @@
+alpha/
+*.exe
+.env
+alpha/.env
