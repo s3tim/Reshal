@@ -6,6 +6,7 @@
 📝 **Форма обратной связи:** https://forms.yandex.ru/cloud/6ae25f121f1eb5f5713ea3e6
 
 ## 📥 Скачать
+https://s3tim.github.io/Reshal/
 Вы можете скачать последнюю бета-версию Reshal прямо с нашего сайта или в разделе Releases этого репозитория.
 
 ## 🚀 Мы ищем разработчиков и поддержку!
@@ -35,6 +36,7 @@ Welcome to the official repository of **Reshal** — a local, privacy-first AI t
 📝 **Feedback Form:** https://forms.yandex.ru/cloud/6ae25f121f1eb5f5713ea3e6
 
 ## 📥 Download
+https://s3tim.github.io/Reshal/
 You can download the latest beta version of Reshal directly from our website or the Releases section of this repository.
 
 ## 🚀 We are looking for contributors!

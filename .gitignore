@@ -2,3 +2,4 @@ alpha/
 *.exe
 .env
 alpha/.env
+alpha.zip
