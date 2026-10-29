@@ -1,0 +1,63 @@
+{
+  "Endpoint": "http://127.0.0.1:11434",
+  "Planner": "qwen2.5-coder:7b",
+  "Classifier": "qwen2.5-coder:7b",
+  "Chat": "qwen2.5-coder:7b",
+  "Retrieval": "qwen2.5-coder:7b",
+  "UseClassifier": true,
+  "AutoStartOllama": true,
+  "Language": "en",
+  "Tiers": {
+    "Micro": "qwen2.5-coder:7b",
+    "Standard": "qwen2.5-coder:7b",
+    "Heavy": "qwen2.5-coder:7b"
+  },
+  "ExternalServer": {
+    "Enabled": false,
+    "ServerPath": "C:\\Users\\STIM\\Documents\\GitHub\\Bonsai\\runtime\\llama-server",
+    "ModelPath": "C:\\Users\\STIM\\Documents\\GitHub\\Bonsai\\Ternary-Bonsai-2-27B-PTQ1_0.gguf",
+    "Port": 8331,
+    "ContextSize": 8192,
+    "GpuLayers": 99,
+    "MaxTokens": 2048,
+    "ExtraArgs": "",
+    "TimeoutSeconds": 300
+  },
+  "Vision": {
+    "Enabled": false,
+    "BaseUrl": "http://127.0.0.1:8765",
+    "TimeoutSeconds": 30
+  },
+  "Cloud": {
+    "Enabled": true,
+    "Active": "openrouter",
+    "ProviderName": "OpenRouter",
+    "Endpoint": "https://openrouter.ai/api/v1/chat/completions",
+    "Model": "openrouter/free",
+    "MaxTokens": 4096,
+    "TimeoutSeconds": 400,
+    "ApiKeyEnvVar": "OPENROUTER_API_KEY",
+    "Headers": {
+      "HTTP-Referer": "https://github.com/your-repo",
+      "X-OpenRouter-Title": "ReshalaAI Terminal"
+    },
+    "Providers": [
+      {
+        "Name": "openrouter",
+        "Endpoint": "https://openrouter.ai/api/v1/chat/completions",
+        "ApiKeyEnvVar": "OPENROUTER_API_KEY",
+        "Model": "openrouter/free",
+        "MaxTokens": 4096,
+        "TimeoutSeconds": 400
+      },
+      {
+        "Name": "opencode",
+        "Endpoint": "https://opencode.ai/zen/v1/chat/completions",
+        "ApiKeyEnvVar": "OPENCODE_API_KEY",
+        "Model": "beam-free",
+        "MaxTokens": 4096,
+        "TimeoutSeconds": 400
+      }
+    ]
+  }
+}
