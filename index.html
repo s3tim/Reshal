@@ -1167,7 +1167,7 @@
                    rel="noopener noreferrer"
                    class="btn btn-secondary">
                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                   <span>Feedback</span>
+                   <span data-i18n="feedback_btn">Feedback</span>
                 </a>
 
                 <a href="https://github.com/s3tim/Reshal"
@@ -1253,7 +1253,7 @@
         <div class="donate-card">
             <h3 data-i18n="donate_title">Buy me a coffee</h3>
             <p data-i18n="donate_desc">If Reshal saves you time, consider supporting the project. Every donation helps keep the servers running and the updates coming.</p>
-            <a href="https://donationalerts.com/r/your_link"
+            <a href="https://www.donationalerts.com/r/Reshal"
                target="_blank"
                rel="noopener noreferrer"
                class="btn-donate">
@@ -1324,7 +1324,7 @@
                     </span>
                     <p data-i18n="download_modal_status">Your download is running in the background. Check your Downloads folder — and stay right here.</p>
                 </div>
-                <a href="https://donationalerts.com/r/your_link"
+                <a href="https://www.donationalerts.com/r/Reshal"
                    target="_blank"
                    rel="noopener noreferrer"
                    class="btn btn-secondary support-btn">
@@ -1393,6 +1393,7 @@
                     letter_p2_html: "Reshal is an experiment: what if the terminal understood you? What if you could just say <span class=\"highlight\">\"find all python files and replace TODO with DONE\"</span> and it just worked?",
                     letter_p3: "This is an open-source project. No hidden subscriptions, no cloud lock-in. Just a tool that respects your privacy and your time. If it saves you even 10 minutes a day, consider supporting its development.",
                     manual_dl: "Support the project",
+                    feedback_btn: "Feedback",
                     download_modal_status: "Your download is running in the background. Check your Downloads folder — and stay right here.",
 
                     mac_title: "Want to run it on a Mac?",
@@ -1446,6 +1447,7 @@
                     letter_p2_html: "Reshal — это эксперимент: что если терминал будет понимать тебя? Что если ты сможешь просто сказать <span class=\"highlight\">\"найди все python файлы и замени TODO на DONE\"</span>, и это сработает?",
                     letter_p3: "Это open-source проект. Никаких скрытых подписок и привязки к облаку. Просто инструмент, который уважает твою приватность и время. Если он экономит тебе хотя бы 10 минут в день, поддержи разработку.",
                     manual_dl: "Поддержать проект",
+                    feedback_btn: "Обратная связь",
                     download_modal_status: "Скачивание уже идёт в фоне. Проверь папку загрузок — и оставайся на сайте.",
 
                     mac_title: "Хочешь запустить на Mac?",
@@ -1579,14 +1581,14 @@
             /* ---------- BACKGROUND DOWNLOAD ---------- */
             /* Replace this URL with your real GitHub release asset. */
             const DOWNLOAD_URL = "https://github.com/s3tim/Reshal/releases/download/v0.1-beta/alpha.zip";
-            const DOWNLOAD_URL_IS_PLACEHOLDER = /твой_профиль|const download_url = "https://github.com/s3tim/reshal/releases/download/v0.1-beta/alpha.zip";
-            const download_url_is_placeholder = false;|your[_-]?(profile|username|user|link)/i.test(DOWNLOAD_URL);
+            // URL is now a real release asset, so downloads always run.
+            const DOWNLOAD_URL_IS_PLACEHOLDER = false;
 
             function startDownload(statusTitle, statusText) {
                 if (!DOWNLOAD_URL_IS_PLACEHOLDER) {
                     const link = document.createElement("a");
                     link.href = DOWNLOAD_URL;
-                    link.download = "Reshal.exe";
+                    link.download = "alpha.zip";
                     link.rel = "noopener";
                     link.style.display = "none";
                     document.body.appendChild(link);
