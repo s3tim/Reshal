@@ -19,6 +19,8 @@ Reshal — активно развивающийся проект. Я ищу р�
 
 Инфа для тестеров в DOCKru.md
 
+p.s: пока сборка только под винду,за сегодняшний день появиться под Линукс
+
 ---
 
 ## ⚠️ License / Лицензия
@@ -46,3 +48,5 @@ If you want to join the team or get access to the source code, please reach out 
 - Email: ReshalaProject@yandex.ru
 
 Info for testers in DOCKen.md
+
+ps:For now, the build is only for Windows, but a Linux version is currently in the works.
